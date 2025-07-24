@@ -1,0 +1,57 @@
+name: 'Build and Deploy Dialog to Patch Branch'
+
+on:
+  workflow_dispatch:
+    branches:
+      - 'fix-dialog-shadowroot'
+
+permissions: write-all
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the dialog package
+        run: pnpm --filter @radix-ui/react-dialog build
+
+      - name: Deploy to patch-dialog branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # The directory to publish
+          publish_dir: ./packages/react/dialog
+          # The branch to publish to
+          publish_branch: patch-dialog
+          # Creates a clean branch without the project's history
+          force_orphan: true
+
+      - name: Build the alert- package
+        run: pnpm --filter @radix-ui/react-alert-dialog build
+
+      - name: Deploy to patch-alert-dialog branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # The directory to publish
+          publish_dir: ./packages/react/alert-dialog
+          # The branch to publish to
+          publish_branch: patch-alert-dialog
+          # Creates a clean branch without the project's history
+          force_orphan: true
